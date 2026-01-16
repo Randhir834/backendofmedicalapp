@@ -3,7 +3,7 @@
  *
  * Auto-generated documentation comments.
  */
- import User from "../models/user.model.js";
+import User from "../models/user.model.js";
 import Patient from "../models/patient.model.js";
 import Doctor from "../models/doctor.model.js";
 import Admin from "../models/admin.model.js";
@@ -12,40 +12,21 @@ import { generateOtp, hashOtp } from "../utils/otp.util.js";
 import { sendOtpEmail } from "../services/email.service.js";
 import { signAccessToken } from "../config/jwt.js";
 
-// auth.controller.js
-//
-// Implements the OTP-based login flow.
-//
-// Endpoints:
-// - requestOtp: validates email, generates OTP, stores hash in OtpSession, emails OTP
-// - verifyOtp: validates OTP, marks session verified, ensures User exists, determines role,
-//              and returns a signed access token
-
+// Normalize email to lowercase
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
 
-/**
- * isValidEmail.
- */
-/**
- * isValidEmail.
- */
-/**
- * isValidEmail.
- */
+// Validate email format
 function isValidEmail(email) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
 }
 
 /**
- * requestOtp.
- */
-/**
- * requestOtp.
- */
-/**
- * requestOtp.
+ * requestOtp (UPDATED)
+ * ✔ Respond instantly
+ * ✔ Send OTP email in background
+ * ✔ Prevent timeout issues
  */
 export async function requestOtp(req, res, next) {
   try {
@@ -69,27 +50,25 @@ export async function requestOtp(req, res, next) {
       { upsert: true, new: true }
     );
 
-    // Send OTP to user's email.
-    await sendOtpEmail({ to: email, otp });
-
-    return res.status(200).json({
+    // ⭐ IMMEDIATE RESPONSE (fixes timeout)
+    res.status(200).json({
       success: true,
-      message: "OTP sent successfully",
+      message: "OTP is being sent",
       email,
     });
+
+    // ⭐ SEND EMAIL IN BACKGROUND (no waiting)
+    sendOtpEmail({ to: email, otp }).catch(err => {
+      console.error("Failed to send OTP email:", err.message);
+    });
+
   } catch (err) {
     return next(err);
   }
 }
 
 /**
- * verifyOtp.
- */
-/**
- * verifyOtp.
- */
-/**
- * verifyOtp.
+ * verifyOtp
  */
 export async function verifyOtp(req, res, next) {
   try {
@@ -122,14 +101,14 @@ export async function verifyOtp(req, res, next) {
     session.verifiedAt = new Date();
     await session.save();
 
-    // Ensure a User record exists for this email.
+    // Ensure User record exists
     const user = await User.findOneAndUpdate(
       { email },
       { $set: { lastLoginAt: new Date() } },
       { upsert: true, new: true }
     );
 
-    // Bootstrap a single admin email if not present (defaults to randhircool44@gmail.com).
+    // Bootstrap the admin account if needed
     const bootstrapAdminEmail = normalizeEmail(process.env.ADMIN_EMAIL || "randhircool44@gmail.com");
     if (bootstrapAdminEmail) {
       await Admin.findOneAndUpdate(
@@ -147,11 +126,11 @@ export async function verifyOtp(req, res, next) {
     const admin = await Admin.findOne({ email }).select({ _id: 1 }).lean();
     const isAdmin = Boolean(admin);
 
-    // Determine current role based on which profile exists.
+    // Determine role
     const role = isAdmin ? "admin" : patient ? "patient" : doctor ? "doctor" : null;
     const isRegistered = Boolean(role);
 
-    // Issue an access token that authMiddleware can verify.
+    // Generate access token
     const accessToken = signAccessToken({ sub: user._id.toString(), email: user.email });
 
     return res.status(200).json({
