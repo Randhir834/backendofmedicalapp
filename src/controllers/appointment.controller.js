@@ -165,7 +165,6 @@ function mapDoctorToPublic(doctorDoc, { baseUrl } = {}) {
     yearsOfExperience,
     isAvailable,
     isOnline: d?.isOnline === true,
-    rating: 0,
     consultationFee: 0,
     photoUrl: baseUrl && id ? `${baseUrl}/doctors/${id}/profile-photo` : "",
   };

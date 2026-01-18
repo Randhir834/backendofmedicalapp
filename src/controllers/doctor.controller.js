@@ -63,7 +63,6 @@ function normalizeEmail(email) {
           yearsOfExperience,
           isAvailable,
           isOnline: d?.isOnline === true,
-          rating: 0,
           consultationFee: 0,
           photoUrl: d?._id ? `${baseUrl}/doctors/${d._id.toString()}/profile-photo` : "",
         };
