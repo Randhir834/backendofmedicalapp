@@ -4,7 +4,7 @@
  * Auto-generated documentation comments.
  */
  import { Router } from "express";
- import { requestOtp, verifyOtp } from "../controllers/auth.controller.js";
+ import { requestOtp } from "../controllers/auth.controller.js";
 
  // auth.routes.js
  //
@@ -16,6 +16,5 @@
  const router = Router();
 
  router.post("/login", requestOtp);
- router.post("/verify-otp", verifyOtp);
 
  export default router;
